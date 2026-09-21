@@ -29,13 +29,10 @@ public class AccountController {
     @GetMapping("/conta")
     public String buscarConta(@RequestParam String id) throws SQLException {
         Connection conn = DriverManager.getConnection("jdbc:h2:mem:test");
-        Statement stmt = conn.createStatement();
-
-        //FALHA (SQL Injection): o parametro "id" vem direto da requisicao HTTP
-        //e e concatenado na string SQL sem nenhuma sanitizacao/parametrizacao.
-        //Um atacante pode enviar, por exemplo, "1' OR '1'='1" para ler contas
-        //que nao deveria, ou "1'; DROP TABLE contas; --" para destruir dados.
-        ResultSet rs = stmt.executeQuery("SELECT * FROM contas WHERE id = '" + id + "'");
+        String sql = "SELECT * FROM contas WHERE id = ?";
+        PreparedStatement stmt = conn.prepareStatement(sql);
+        stmt.setString(1, id);
+        ResultSet rs = stmt.executeQuery();
 
         StringBuilder resultado = new StringBuilder();
         while (rs.next()) {
@@ -43,8 +40,6 @@ public class AccountController {
         }
         return resultado.toString();
     }
-
-    
 
     @GetMapping("/health")
     public String health() {
